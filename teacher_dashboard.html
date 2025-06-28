@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Öğretmen Paneli - Öğrenci Yönetim Sistemi{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="fas fa-tachometer-alt me-2"></i>Öğretmen Paneli</h1>
+                <p class="text-muted mb-0">Hoş geldiniz, {{ current_user.full_name }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                    <h3 class="card-title">{{ total_students }}</h3>
+                    <p class="card-text text-muted">Toplam Öğrenci</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-book fa-2x text-success mb-2"></i>
+                    <h3 class="card-title">{{ total_subjects }}</h3>
+                    <p class="card-text text-muted">Ders Sayısı</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-tasks fa-2x text-warning mb-2"></i>
+                    <h3 class="card-title">{{ total_assignments }}</h3>
+                    <p class="card-text text-muted">Toplam Ödev</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Recent Grades -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Son Notlar
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_grades %}
+                    <div class="list-group list-group-flush">
+                        {% for grade, user, subject in recent_grades %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ user.full_name }}</strong><br>
+                                <small class="text-muted">{{ subject.name }} - {{ grade.exam_type }}</small>
+                            </div>
+                            <span class="badge bg-primary rounded-pill">{{ grade.grade }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Henüz not girilmemiş.</p>
+                    {% endif %}
+                    
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('manage_grades') }}" class="btn btn-outline-primary me-2">
+                            Tüm Notları Görüntüle
+                        </a>
+                        <a href="{{ url_for('manage_students') }}" class="btn btn-outline-success">
+                            <i class="fas fa-user-plus me-1"></i>Öğrenci Ekle
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pending Assignments -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clock me-2"></i>Bekleyen Ödevler
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if pending_assignments %}
+                    <div class="list-group list-group-flush">
+                        {% for assignment, user, subject in pending_assignments %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>{{ assignment.title }}</strong><br>
+                                    <small class="text-muted">{{ user.full_name }} - {{ subject.name }}</small>
+                                </div>
+                                <small class="text-muted">{{ assignment.due_date.strftime('%d.%m.%Y') }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Bekleyen ödev yok.</p>
+                    {% endif %}
+                    
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('manage_assignments') }}" class="btn btn-outline-primary">
+                            Tüm Ödevleri Görüntüle
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

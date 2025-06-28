@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Ödev Yönetimi - Öğrenci Yönetim Sistemi{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1><i class="fas fa-tasks me-2"></i>Ödev Yönetimi</h1>
+            <p class="text-muted">Öğrenci ödevlerini yönetin</p>
+        </div>
+    </div>
+    
+    <!-- Add Assignment Form -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-plus me-2"></i>Yeni Ödev Ekle
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="title" class="form-label">Ödev Başlığı</label>
+                                    <input type="text" class="form-control" id="title" name="title" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="subject_id" class="form-label">Ders</label>
+                                    <select class="form-select" id="subject_id" name="subject_id" required>
+                                        <option value="">Ders seçin</option>
+                                        {% for subject in subjects %}
+                                        <option value="{{ subject.id }}">{{ subject.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="student_id" class="form-label">Öğrenci</label>
+                                    <select class="form-select" id="student_id" name="student_id" required>
+                                        <option value="">Öğrenci seçin</option>
+                                        {% for student in students %}
+                                        <option value="{{ student.id }}">{{ student.full_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Açıklama</label>
+                                    <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="due_date" class="form-label">Teslim Tarihi</label>
+                                    <input type="date" class="form-control" id="due_date" name="due_date" required>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="file" class="form-label">Ödev Dosyası (İsteğe bağlı)</label>
+                                    <input type="file" class="form-control" id="file" name="file" accept=".pdf,.doc,.docx,.txt">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Ödev Ekle
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Assignments List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>Tüm Ödevler
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if assignments %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Başlık</th>
+                                    <th>Öğrenci</th>
+                                    <th>Ders</th>
+                                    <th>Durum</th>
+                                    <th>Teslim Tarihi</th>
+                                    <th>Oluşturulma</th>
+                                    <th>Dosya</th>
+                                    <th>Açıklama</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for assignment, user, subject in assignments %}
+                                <tr>
+                                    <td><strong>{{ assignment.title }}</strong></td>
+                                    <td>{{ user.full_name }}</td>
+                                    <td>{{ subject.name }}</td>
+                                    <td>
+                                        {% if assignment.status == 'completed' %}
+                                        <span class="badge bg-success">Tamamlandı</span>
+                                        {% elif assignment.due_date < current_date %}
+                                        <span class="badge bg-danger">Gecikti</span>
+                                        {% else %}
+                                        <span class="badge bg-warning">Bekliyor</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ assignment.due_date.strftime('%d.%m.%Y') }}</td>
+                                    <td>{{ assignment.created_at.strftime('%d.%m.%Y') }}</td>
+                                    <td>
+                                        {% if assignment.file_path %}
+                                        <div class="d-flex gap-1">
+                                            <a href="{{ url_for('uploaded_file', filename=assignment.file_path.split('/')[-1]) }}" class="btn btn-sm btn-outline-info" target="_blank">
+                                                <i class="fas fa-download"></i> {{ assignment.original_filename[:15] }}{{ '...' if assignment.original_filename|length > 15 else '' }}
+                                            </a>
+                                            <form method="POST" action="{{ url_for('upload_assignment_file', assignment_id=assignment.id) }}" enctype="multipart/form-data" class="d-inline">
+                                                <div class="input-group input-group-sm">
+                                                    <input type="file" class="form-control" name="file" accept=".pdf,.doc,.docx,.txt" style="max-width: 150px;">
+                                                    <button type="submit" class="btn btn-outline-warning">
+                                                        <i class="fas fa-sync"></i>
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        {% else %}
+                                        <form method="POST" action="{{ url_for('upload_assignment_file', assignment_id=assignment.id) }}" enctype="multipart/form-data" class="d-inline">
+                                            <div class="input-group input-group-sm">
+                                                <input type="file" class="form-control" name="file" accept=".pdf,.doc,.docx,.txt" style="max-width: 150px;">
+                                                <button type="submit" class="btn btn-outline-primary">
+                                                    <i class="fas fa-upload"></i>
+                                                </button>
+                                            </div>
+                                        </form>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ assignment.description[:50] }}{{ '...' if assignment.description|length > 50 else '' }}</td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('delete_assignment', assignment_id=assignment.id) }}" class="d-inline" 
+                                              onsubmit="return confirm('Bu ödevi silmek istediğinizden emin misiniz?')">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Henüz ödev eklenmemiş.</p>
+                    {% endif %}
+                    
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('view_all_assignments') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-history me-2"></i>Tüm Ödevleri Görüntüle
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

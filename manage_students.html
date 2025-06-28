@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Öğrenci Yönetimi - Öğrenci Yönetim Sistemi{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1><i class="fas fa-user-plus me-2"></i>Öğrenci Yönetimi</h1>
+            <p class="text-muted">Yeni öğrenci hesapları oluşturun ve mevcut öğrencileri yönetin</p>
+        </div>
+    </div>
+    
+    <!-- Add Student Form -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-plus me-2"></i>Yeni Öğrenci Ekle
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">Kullanıcı Adı *</label>
+                                    <input type="text" class="form-control" id="username" name="username" required 
+                                           placeholder="ornek: ahmet123" pattern="[a-zA-Z0-9_]+" 
+                                           title="Sadece harf, rakam ve alt çizgi kullanın">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Şifre *</label>
+                                    <input type="password" class="form-control" id="password" name="password" required 
+                                           minlength="4" placeholder="En az 4 karakter">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="full_name" class="form-label">Ad Soyad *</label>
+                                    <input type="text" class="form-control" id="full_name" name="full_name" required 
+                                           placeholder="Ahmet Yılmaz">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">E-posta (İsteğe bağlı)</label>
+                                    <input type="email" class="form-control" id="email" name="email" 
+                                           placeholder="ahmet@example.com">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-user-plus me-2"></i>Öğrenci Ekle
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Students List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-users me-2"></i>Kayıtlı Öğrenciler ({{ students|length }} kişi)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if students %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Ad Soyad</th>
+                                    <th>Kullanıcı Adı</th>
+                                    <th>E-posta</th>
+                                    <th>Kayıt Tarihi</th>
+                                    <th>Not Sayısı</th>
+                                    <th>Ödev Sayısı</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in students %}
+                                <tr>
+                                    <td><strong>{{ student.full_name }}</strong></td>
+                                    <td>
+                                        <code>{{ student.username }}</code>
+                                    </td>
+                                    <td>{{ student.email or '-' }}</td>
+                                    <td>{{ student.created_at.strftime('%d.%m.%Y') }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ student.grades|length }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning">{{ student.assignments|length }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-info" 
+                                                    onclick="showStudentInfo('{{ student.username }}', '{{ student.full_name }}', '{{ student.email or '' }}', '{{ student.created_at.strftime('%d.%m.%Y') }}', {{ student.grades|length }}, {{ student.assignments|length }})">
+                                                <i class="fas fa-info"></i>
+                                            </button>
+                                            <form method="POST" action="{{ url_for('delete_student', student_id=student.id) }}" class="d-inline" 
+                                                  onsubmit="return confirm('Bu öğrenciyi ve tüm verilerini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!')">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted">
+                        <i class="fas fa-users fa-3x mb-3"></i>
+                        <p>Henüz kayıtlı öğrenci yok.</p>
+                        <p>Yukarıdaki formu kullanarak yeni öğrenci ekleyebilirsiniz.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Student Info Modal -->
+<div class="modal fade" id="studentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Öğrenci Bilgileri</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="studentInfo"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showStudentInfo(username, fullName, email, createdAt, gradeCount, assignmentCount) {
+    document.getElementById('studentInfo').innerHTML = `
+        <div class="row">
+            <div class="col-6"><strong>Ad Soyad:</strong></div>
+            <div class="col-6">${fullName}</div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-6"><strong>Kullanıcı Adı:</strong></div>
+            <div class="col-6"><code>${username}</code></div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-6"><strong>E-posta:</strong></div>
+            <div class="col-6">${email || 'Belirtilmemiş'}</div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-6"><strong>Kayıt Tarihi:</strong></div>
+            <div class="col-6">${createdAt}</div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-6"><strong>Not Sayısı:</strong></div>
+            <div class="col-6"><span class="badge bg-info">${gradeCount}</span></div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-6"><strong>Ödev Sayısı:</strong></div>
+            <div class="col-6"><span class="badge bg-warning">${assignmentCount}</span></div>
+        </div>
+        <hr>
+        <div class="alert alert-info mb-0">
+            <small><i class="fas fa-info-circle me-1"></i>Bu öğrenci hesabını silerseniz tüm notları ve ödevleri de silinecektir.</small>
+        </div>
+    `;
+    new bootstrap.Modal(document.getElementById('studentModal')).show();
+}
+</script>
+{% endblock %}

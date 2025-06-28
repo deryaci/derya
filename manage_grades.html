@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Not Yönetimi - Öğrenci Yönetim Sistemi{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1><i class="fas fa-chart-line me-2"></i>Not Yönetimi</h1>
+            <p class="text-muted">Öğrenci notlarını yönetin</p>
+        </div>
+    </div>
+    
+    <!-- Add Grade Form -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-plus me-2"></i>Yeni Not Ekle
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="student_id" class="form-label">Öğrenci</label>
+                                    <select class="form-select" id="student_id" name="student_id" required>
+                                        <option value="">Öğrenci seçin</option>
+                                        {% for student in students %}
+                                        <option value="{{ student.id }}">{{ student.full_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="subject_id" class="form-label">Ders</label>
+                                    <select class="form-select" id="subject_id" name="subject_id" required>
+                                        <option value="">Ders seçin</option>
+                                        {% for subject in subjects %}
+                                        <option value="{{ subject.id }}">{{ subject.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label for="grade" class="form-label">Not</label>
+                                    <input type="number" class="form-control" id="grade" name="grade" min="0" max="100" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label for="exam_type" class="form-label">Sınav Türü</label>
+                                    <select class="form-select" id="exam_type" name="exam_type" required>
+                                        <option value="">Seçin</option>
+                                        <option value="Quiz">Quiz</option>
+                                        <option value="Ara Sınav">Ara Sınav</option>
+                                        <option value="Final">Final</option>
+                                        <option value="Proje">Proje</option>
+                                        <option value="Ödev">Ödev</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label for="notes" class="form-label">Notlar</label>
+                                    <input type="text" class="form-control" id="notes" name="notes" placeholder="İsteğe bağlı">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="exam_file" class="form-label">Sınav Dosyası (PDF)</label>
+                                    <input type="file" class="form-control" id="exam_file" name="exam_file" accept=".pdf">
+                                    <div class="form-text">İsteğe bağlı - Sınav sonucu PDF dosyası yükleyebilirsiniz</div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Not Ekle
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Grades List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>Tüm Notlar
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if grades %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Öğrenci</th>
+                                    <th>Ders</th>
+                                    <th>Not</th>
+                                    <th>Sınav Türü</th>
+                                    <th>Tarih</th>
+                                    <th>Notlar</th>
+                                    <th>Dosya</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for grade, user, subject in grades %}
+                                <tr>
+                                    <td>{{ user.full_name }}</td>
+                                    <td>{{ subject.name }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if grade.grade >= 80 else 'warning' if grade.grade >= 60 else 'danger' }}">
+                                            {{ grade.grade }}
+                                        </span>
+                                    </td>
+                                    <td>{{ grade.exam_type }}</td>
+                                    <td>{{ grade.date_recorded.strftime('%d.%m.%Y') }}</td>
+                                    <td>{{ grade.notes or '-' }}</td>
+                                    <td>
+                                        {% if grade.file_path %}
+                                        <a href="{{ url_for('download_grade_file', grade_id=grade.id) }}" class="btn btn-sm btn-outline-primary" title="PDF İndir">
+                                            <i class="fas fa-file-pdf"></i> {{ grade.original_filename }}
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('delete_grade', grade_id=grade.id) }}" class="d-inline" 
+                                              onsubmit="return confirm('Bu notu silmek istediğinizden emin misiniz?')">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Henüz not girilmemiş.</p>
+                    {% endif %}
+                    
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('view_all_grades') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-history me-2"></i>Tüm Notları Görüntüle
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
